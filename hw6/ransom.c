@@ -8,20 +8,21 @@
 #include <stdlib.h>
 #include <string.h>
 //defines and typedefs
-    typedef struct key key;
-    typedef struct map map;
+typedef struct key key;
+typedef struct map map;
 
     
-    struct key {
-        char *word;
-        int appears_note;
-        int appears_magazine;
-        key *next;
-    };
-    struct map {
-        key *head;
-        key *tail;  
-    };
+struct key {
+    char *word;
+    int appears_note;
+    int appears_magazine;
+    key *next;
+};
+
+struct map {
+    key *head;
+    key *tail;
+};
 // declartions
 char* readline();
 char** split_string(char*);
@@ -30,11 +31,11 @@ void checkMagazine(int magazine_count,
 		           char** magazine, 
 				   int note_count, 
 				   char** note);
-key *create_new_key(char word_data ,int where);
-void insert_into_map(map **map, char word_data,int where);
-void free_map (key *key);
-map_maker(map **map ,char **data ,int length,int where);
-chk_map(map *map);
+struct key *create_new_key(char *word_data ,int where);
+void insert_into_map(struct map **map, char word_data,int where);
+void free_map (struct key *key);
+void map_maker(struct map **map ,char **data ,int length, int where);
+void chk_map(struct map *map);
 
 
 
@@ -152,7 +153,6 @@ void print_yes_or_no(int state){
     else{
     	printf("YES\n");
     }
-    return 0;
 
 }
 
@@ -160,29 +160,34 @@ void checkMagazine(int magazine_count,
 		           char** magazine,
 				   int note_count,
 				   char** note) {
+
     int where = 1;
+    struct map *map;
+    struct key *key;
+
     
-    map_maker(map ,magazine , magazine_count,where);
-    map_maker(map ,note ,note_count,!(where));
+    map_maker( &map , magazine , magazine_count, where);
+    map_maker( &map , note ,note_count,!(where));
     chk_map(map);
-    free_map((map -> head));
+    free_map(map -> head);
 
     
 
 }
+
 // creates a new key and returns it
 //magazine =1
 //note=0
-key *create_new_key(char word_data ,int where){
+struct key *create_new_key(char *word_data ,int where){
 	key *key_ptr = malloc(sizeof(key));
-	key_ptr -> word=word_data;
+	strcpy(key_ptr -> word, word_data);
 	if (where){
-		key_ptr -> appear_magazine = 1;
-        key_ptr -> appear_note = 0;
+		key_ptr -> appears_magazine = 1;
+        key_ptr -> appears_note = 0;
 	}
 	else {
-		key_ptr -> appear_note = 1;
-        key_ptr -> appear_magazine = 0;
+		key_ptr -> appears_note = 1;
+        key_ptr -> appears_magazine = 0;
 	}
 		
 	key_ptr -> next = NULL;
@@ -190,8 +195,8 @@ key *create_new_key(char word_data ,int where){
 	
 }
 //insert new key into the map 
-void insert_into_map(map **map, char word_data,int where){
-	key *key_ptr = create_new_key(word_data,where);
+void insert_into_map(struct map **map, char word_data,int where){
+	key *key_ptr = create_new_key(*word_data,where);
 	if(!(*map)->head){
 		(*map) -> head = key_ptr;
 	}
@@ -201,22 +206,24 @@ void insert_into_map(map **map, char word_data,int where){
 	(*map) -> tail = key_ptr;
 			
 }
+
 // free the map from a given key
-void free_map (key *key){
+void free_map (struct key *key){
 	while (key){
-		key *temp = key;
+		struct key *temp = key;
 		key = key -> next;
 		free(temp);
 	}
 }
 
 // creates the maps without make double keys
-void map_maker(map **map ,char **data ,int length,int where){
-    key *curr_key = (map -> head);
+void map_maker(struct map **map ,char **data ,int length, int where){
+    struct key *curr_key = (*map) -> head;
     for(int i=0 ;i < length;i++){
     	char *temp = *(data +i);
     	while (curr_key!= NULL ){
     		if (!strcmp((curr_key -> word) , temp)){
+    			printf("%s\n", temp);
                 if (where){
     			    curr_key -> appears_magazine
                      = (curr_key -> appears_magazine) +1;
@@ -228,7 +235,7 @@ void map_maker(map **map ,char **data ,int length,int where){
     		}
     		else {
     			if (!(curr_key -> next)){
-    				insert_into_map(map ,temp,where)  ;  	
+    				insert_into_map(map ,temp, where)  ;
     			}
     			else{
     			    curr_key = curr_key -> next;	
@@ -239,7 +246,7 @@ void map_maker(map **map ,char **data ,int length,int where){
     }
 }
 
-void chk_map(map *map){
+void chk_map(struct map *map){
     int can_make_note = 1;
     key *curr_key = (map -> head);
     while(curr_key != NULL){
@@ -253,4 +260,5 @@ void chk_map(map *map){
     }
     print_yes_or_no(can_make_note);
 }
+
 
