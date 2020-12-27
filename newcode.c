@@ -1,3 +1,4 @@
+
 #include <assert.h>
 #include <limits.h>																
 #include <math.h>																
@@ -39,6 +40,7 @@ void insert_into_map(struct map **map, char *word_data,int where);
 void free_map (struct key *key);
 void map_maker(struct map **map ,char **data ,int length, int where);
 void chk_map(struct map *map);
+int my_strcmp(char *str1, char *str2);
 
 
 
@@ -61,8 +63,8 @@ int main()
     char** magazine_temp = split_string(readline());						
 
     char** magazine = malloc(m * sizeof(char*));
-    																			//fill the magazine arr
-    for (int i = 0; i < m; i++) {												//not forget to free **magazine
+
+    for (int i = 0; i < m; i++) {
         char* magazine_item = *(magazine_temp + i);
 
         *(magazine + i) = magazine_item;
@@ -70,8 +72,8 @@ int main()
 
     int magazine_count = m;
 
-    char** note_temp = split_string(readline());								//fill the note arr
-    																			//not forget to free **note
+    char** note_temp = split_string(readline());
+
     char** note = malloc(n * sizeof(char*));
 
     for (int i = 0; i < n; i++) {
@@ -149,12 +151,14 @@ char** split_string(char* str) {
     return splits;
 }
 
+// prints "YES" or "NO" according to a flag
+// the func gets
 void print_yes_or_no(int state){
     if(!state){
-    	printf("NO\n");
+    	printf("NO");
     }
     else{
-    	printf("YES\n");
+    	printf("YES");
     }
 
 }
@@ -164,20 +168,26 @@ void checkMagazine(int magazine_count,
 				   int note_count,
 				   char** note) {
 
-    int where = 1;
+    int where = 1; //tell what we insert to the map
     char *temp_str=*magazine;
     struct map *map=malloc(sizeof(struct map));
-    insert_into_map(&map,temp_str,where);
+    insert_into_map(&map,temp_str,where); //insert the first key to the map
+    //insert the rest of magazine to the map
     map_maker( &map , (magazine +1) , magazine_count, where);
+    //insert note to the map
     map_maker( &map , note ,note_count,!(where));
+    // check if we can make note out of magazine
     chk_map(map);
+    //free the map keys
     free_map(map -> head);
+    //free map ptr
     free(map);
 }
 
-// creates a new key and returns it
-//magazine =1
-//note=0
+/* creates a new key and returns it.
+ * if where=0 ->insert to magazine
+ * if where=1 ->insert to note
+ */
 struct key *create_new_key(char **word_data ,int where){
 	struct key *key_ptr = malloc(sizeof(struct key));
 	key_ptr -> word = *word_data;
@@ -194,7 +204,8 @@ struct key *create_new_key(char **word_data ,int where){
 	return key_ptr;
 	
 }
-//insert new key into the map 
+/*insert new key into the map  */
+
 void insert_into_map(struct map **map, char *word_data,int where){
 	struct key *key_ptr = create_new_key(&word_data,where);
 	if(!(*map)->head){
@@ -207,7 +218,7 @@ void insert_into_map(struct map **map, char *word_data,int where){
 			
 }
 
-// free the map from a given key
+/*free the map from a given key*/
 void free_map (struct key *key){
 	while (key){
 		struct key *temp = key;
@@ -216,18 +227,26 @@ void free_map (struct key *key){
 	}
 }
 
-// creates the maps without make double keys
+/*creates the maps without make double keys
+ * temp-> the current word that save in data
+ * str1->the current word that save in the current key
+ * a-> get 1 if temp and str1 is the same and 0 if isn't
+ * where -> if we working on magazine or note;
+ */
 void map_maker(struct map **map ,char **data ,int length, int where){
     for(int i=0 ;i < length;i++){
         struct key *curr_key = ((*map) -> head);
     	char *temp = *(data +i);
-    	if (!temp){
+    	if (!temp){/* if we get to the end of data "\0" we break for, the loop*/
     	    break;
     	}
     	else{
     	    while ((curr_key)!= NULL ){
+    	    /* we check if the 2 strings if the same and if they the same
+    	     * we update the filed in the current key
+    	     */
     	    char *str1= (curr_key -> word);
-    	    int a=my_strcmp(str1,temp);
+    	    int a = my_strcmp(str1,temp);
     		if (a){
                 if (where){
     			    curr_key -> appears_magazine
@@ -238,6 +257,12 @@ void map_maker(struct map **map ,char **data ,int length, int where){
                 }
 				break;
     		}
+    		/*if the strings arn't the same we continue going on the map keys
+    		 *until we find  word that is the same as the word in data
+    		 *or we arrived to the end of the map and insert a new key
+    		 *that in the key word we put the word in data
+    		 *update curr_key to the next key (or the end if inserting new key
+    		 */
     		else {
     			if (!(curr_key -> next)){
     				insert_into_map(map ,temp, where);
@@ -251,7 +276,13 @@ void map_maker(struct map **map ,char **data ,int length, int where){
     	}
     }
 }
-
+/* we check if for any appear of word in note there is appear in magazine
+ * if there more appears of a word in note then magazine we sent to
+ * print_yes_or_no -> 0 can't make a note
+ * if there is the same appears in magazine we continue to the next key
+ * if we went out of the loop -> we can make a note
+ * print_yes_or_no ->1 can make a note
+ */
 void chk_map(struct map *map){
     int can_make_note = 1;
     key *curr_key = (map -> head);
@@ -266,15 +297,21 @@ void chk_map(struct map *map){
     }
     print_yes_or_no(can_make_note);
 }
+/* compering between 2 strings
+ * the max chars of string is 5
+ *
+ */
 int my_strcmp(char *str1, char *str2){
+	/* check if the string isn't empty */
  if((str1==NULL)||(str2==NULL)){
         return !SAME;
     }
 
     else{
-    
-        char temp_str1[5] = {'\0','\0','\0','\0','\0','\0'};
-        char temp_str2[5] = {'\0','\0','\0','\0','\0','\0'};
+    	/*copy the strings to temp string */
+
+        char temp_str1[6] = {'\0','\0','\0','\0','\0','\0'};
+        char temp_str2[6] = {'\0','\0','\0','\0','\0','\0'};
         int i=0;
         while(*(str1+i)){
             temp_str1[i]=*(str1+i);
@@ -285,6 +322,11 @@ int my_strcmp(char *str1, char *str2){
             temp_str2[i]=*(str2+i);
             i++;
         }
+        /* Subtract between the 2 strings and if the result isn't 0
+         *  not the same return not the same
+         *  else continue to go over the strings if reach /0
+         *  return the same
+         */
         for (int i=0;i<FIVE;i++){
             if(!!(temp_str1[i]-temp_str2[i])) {
                 return !SAME;
@@ -292,7 +334,7 @@ int my_strcmp(char *str1, char *str2){
             else{
                  continue;
             }
-        }   
+        }
     }
         return SAME;
 }
